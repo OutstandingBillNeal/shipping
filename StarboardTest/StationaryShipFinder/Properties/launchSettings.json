@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "StationaryShipFinder": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\shabl\\Downloads\\sample.json C:\\Users\\shabl\\Downloads\\output.txt"
+    }
+  }
+}
