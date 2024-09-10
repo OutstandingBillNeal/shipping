@@ -23,4 +23,6 @@ var inputFileName = commandLineArguments[1];
 var outputFileName = commandLineArguments[2];
 
 var processor = new FileProcessor(Log.Logger);
-processor.Process(inputFileName, outputFileName);
+await processor.Process(inputFileName, outputFileName);
+
+Log.Information("Finished");

@@ -13,4 +13,5 @@ public class Position
             ? null
             : new Position { Latitude = positionReport.Message.Latitude.Value, Longitude = positionReport.Message.Longitude.Value };
     }
+
 }
