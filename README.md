@@ -1,7 +1,7 @@
 # Bill's solution for the Starboard Maritime technical challenge
 
 ## Dependencies
-Please install .NET Framework 8.0.
+Please install .NET Core 8.0 from here: https://dotnet.microsoft.com/en-us/download/dotnet/8.0
 
 ## How to run the application
 1. At the command line, navigate to the folder containing this README.md file
