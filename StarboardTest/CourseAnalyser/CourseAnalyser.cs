@@ -11,7 +11,7 @@ public class CourseAnalyser()
     private const int _minimumTimeForSpeedCalculation = 60;
     private const double _maximumSpeedToTriggerReporting = 1.0;
 
-    public CourseAnalyserReadResult? Read(string jsonString)
+    public Position? Read(string jsonString)
     {
         var positionReport = JsonSerializer.Deserialize<PositionReport>(jsonString);
 
@@ -53,12 +53,8 @@ public class CourseAnalyser()
             return null;
         }
 
-        // This vessel is moving slowly.
-        // Return data about its progress.
-        return new CourseAnalyserReadResult
-        {
-            FirstPositionReport = startPositionReport,
-            NextPositionReport = endPositionReport
-        };
+        // This vessel has stopped, or is moving slowly.
+        // Return its position.
+        return endPosition;
     }
 }

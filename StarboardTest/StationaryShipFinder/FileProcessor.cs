@@ -3,6 +3,7 @@ using Serilog;
 using Analysis;
 using ShippingData;
 using System.Text.Json;
+using System.Xml.Schema;
 
 namespace StationaryShipFinder;
 
@@ -14,8 +15,11 @@ internal class FileProcessor(ILogger logger)
     {
         const int BufferSize = 2048;
         const int stopAfterLines = int.MaxValue; // Temporary, to give me short run times if something such as a Console.Write is slowing it down.
+        const double deDupingDistanceKm = 10.0;
         var linesRead = 0;
+        var linesWritten = 0;
         var analyser = new CourseAnalyser();
+        var stationaryPositions = new List<Position>();
 
         _logger.Information("Stationary ship finder starting.");
 
@@ -29,34 +33,41 @@ internal class FileProcessor(ILogger logger)
             while ((line = await inputStreamReader.ReadLineAsync()) != null && linesRead <= stopAfterLines)
             {
                 linesRead++;
-                var result = analyser.Read(line);
+                var stationaryPosition = analyser.Read(line);
 
-                if (result == null
-                    || result.NextPositionReport == null
-                    || result.NextPositionReport.Message == null
-                    || result.NextPositionReport.Message.Latitude == null
-                    || result.NextPositionReport.Message.Longitude == null)
+                if (stationaryPosition == null)
                 {
                     continue;
                 }
 
-                var latitude = result.NextPositionReport.Message.Latitude.Value;
-                var longitude = result.NextPositionReport.Message.Longitude.Value;
+                // Define a square around this new point...
+                var oneCorner = stationaryPosition.Transpose(-deDupingDistanceKm, -deDupingDistanceKm);
+                var otherCorner = stationaryPosition.Transpose(deDupingDistanceKm, deDupingDistanceKm);
+                // ... and find out if we've already recorded a point within that square.
+                var alreadyRecorded = stationaryPositions
+                    .Any(sp => sp.Latitude >= oneCorner.Latitude && sp.Latitude <= otherCorner.Latitude
+                        && sp.Longitude >= oneCorner.Longitude && sp.Longitude <= otherCorner.Longitude);
+
+                if (alreadyRecorded)
+                {
+                    continue;
+                }
 
                 var output = new GeoJson
                 {
                     geometry = new Geometry
                     {
-                        coordinates = [latitude, longitude]
+                        coordinates = [stationaryPosition.Latitude, stationaryPosition.Longitude]
                     }
                 };
 
                 var fileLine = JsonSerializer.Serialize(output);
-                File.AppendAllLines(outputFileName, [fileLine]);
+                await File.AppendAllLinesAsync(outputFileName, [fileLine]);
+                linesWritten++;
             }
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         }
 
-        _logger.Information("Done. {0} lines read.", linesRead);
+        _logger.Information("Done. {0} lines read, {1} lines written.", linesRead, linesWritten);
     }
 }
