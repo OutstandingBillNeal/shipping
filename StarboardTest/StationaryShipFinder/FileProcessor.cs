@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Serilog;
+using Analysis;
 
 namespace StationaryShipFinder;
 
@@ -13,6 +14,7 @@ internal class FileProcessor(ILogger logger)
         const int numberOfCoursesPerBatch = 1000;
         const int stopAfterLines = int.MaxValue; // Temporary, to give me short run times if something such as a Console.Write is slowing it down.
         var linesRead = 0;
+        var analyser = new CourseAnalyser(numberOfCoursesPerBatch);
 
         _logger.Information("Stationary ship finder starting, batch size: {0}.", numberOfCoursesPerBatch);
 
@@ -24,8 +26,7 @@ internal class FileProcessor(ILogger logger)
             while ((line = inputStreamReader.ReadLine()) != null && linesRead <= stopAfterLines)
             {
                 linesRead++;
-                // Process line
-                //Console.WriteLine(line);
+                analyser.Read(line);
             }
         }
 
