@@ -55,8 +55,10 @@ internal class FileProcessor(ILogger logger)
 
                 var output = new GeoJson
                 {
+                    type = "Feature",
                     geometry = new Geometry
                     {
+                        type = "Point",
                         coordinates = [stationaryPosition.Latitude, stationaryPosition.Longitude]
                     }
                 };

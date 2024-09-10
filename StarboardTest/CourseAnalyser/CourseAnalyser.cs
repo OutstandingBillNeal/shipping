@@ -42,6 +42,13 @@ public class CourseAnalyser()
 
         var startPosition = Position.FromPositionReport(startPositionReport);
         var endPosition = Position.FromPositionReport(endPositionReport);
+
+        if (startPosition == null || endPosition == null)
+        {
+            // Both are required to determine speed.
+            return null;
+        }
+
         var distanceTravelled = startPosition.NauticalMilesTo(endPosition);
         var knots = distanceTravelled * SecondsPerHour / secondsTaken;
 

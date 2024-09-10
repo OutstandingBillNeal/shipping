@@ -6,12 +6,12 @@
 
 public class GeoJson
 {
-    public static string type { get; set; }
-    public Geometry geometry { get; set; }
+    public required string type { get; set; }
+    public required Geometry geometry { get; set; }
 }
 
 public class Geometry
 {
-    public string type => "Point";
-    public double[] coordinates { get; set; }
+    public required string type { get; set; }
+    public required double[] coordinates { get; set; }
 }
