@@ -14,7 +14,7 @@ internal class FileProcessor(ILogger logger)
     public async Task Process(string inputFileName, string outputFileName)
     {
         const int BufferSize = 2048;
-        const int stopAfterLines = int.MaxValue; // Temporary, to give me short run times if something such as a Console.Write is slowing it down.
+        const int stopAfterLines = int.MaxValue; // Temporary, to give me a short run time and small output file.
         const double deDupingDistanceKm = 10.0;
         var linesRead = 0;
         var linesWritten = 0;
@@ -28,9 +28,13 @@ internal class FileProcessor(ILogger logger)
             using var inputStreamReader = new StreamReader(inputFileStream, Encoding.UTF8, true, BufferSize);
 
             string line;
+            var lastLineToBeWritten = string.Empty;
+
+            // Write the opening lines to the output file.
+            await File.WriteAllLinesAsync(outputFileName, ["{", "  \"type\": \"FeatureCollection\",", "  \"features\": ["]);
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-            while ((line = await inputStreamReader.ReadLineAsync()) != null && linesRead <= stopAfterLines)
+            while ((line = await inputStreamReader.ReadLineAsync()) != null && linesWritten <= stopAfterLines)
             {
                 linesRead++;
                 var stationaryPosition = analyser.Read(line);
@@ -63,11 +67,26 @@ internal class FileProcessor(ILogger logger)
                     }
                 };
 
-                var fileLine = JsonSerializer.Serialize(output);
-                await File.AppendAllLinesAsync(outputFileName, [fileLine]);
-                linesWritten++;
+                var fileLine = $"    {JsonSerializer.Serialize(output)}";
+
+                // Add a comma to the output line from the time before.
+                if (lastLineToBeWritten != string.Empty)
+                {
+                    lastLineToBeWritten = $"{lastLineToBeWritten},";
+                    await File.AppendAllLinesAsync(outputFileName, [lastLineToBeWritten]);
+                    linesWritten++;
+                }
+
+                lastLineToBeWritten = fileLine;
             }
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+
+            // Write the last line without a comma, plus everything else required.
+            if (lastLineToBeWritten != string.Empty)
+            {
+                await File.AppendAllLinesAsync(outputFileName, [lastLineToBeWritten, "  ]", "}"]);
+                linesWritten++;
+            }
         }
 
         _logger.Information("Done. {0} lines read, {1} lines written.", linesRead, linesWritten);
